@@ -1,0 +1,1 @@
+void DownloadFile(char*);
