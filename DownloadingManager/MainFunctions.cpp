@@ -3,17 +3,21 @@
 #pragma comment(lib, "wininet.lib")
 #include <fstream>
 #include <iostream>
+#include "ProgressBar.h"
 #include "MainFunctions.h"
 
 using namespace std;
 
 HINTERNET hInternetSession;
 HINTERNET hURL;
-const DWORD Size = 1024;
-char Buffer[Size] = "";
-DWORD error;
+const DWORD size = 1024;
+char buffer[size] = "";
+DWORD error; 
+char sizeFileChar[size] = "";
+double sizeFileInt;
+DWORD sizeBuff = sizeof(sizeFileChar);
 DWORD readBytes;
-BOOL Result = true;
+BOOL result = true;
 
 void DownloadFile(char* URL) {
 	hInternetSession = InternetOpen("Downloading Manager", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, NULL);
@@ -21,15 +25,19 @@ void DownloadFile(char* URL) {
 		hURL = InternetOpenUrl(hInternetSession, (LPCSTR)URL, NULL, NULL, NULL, NULL);
 		if (hURL != NULL){
 			ofstream news("downloaded.dat", ios::binary);
+			HttpQueryInfo(hURL, HTTP_QUERY_CONTENT_LENGTH, &sizeFileChar, &sizeBuff, NULL);
+			sizeFileInt = atoi(sizeFileChar);
+			ProgressBar progressBar(sizeFileInt);
 			do {
-				Result = InternetReadFile(hURL, &Buffer, Size, &readBytes);
-				if (Result != true) {
+				result = InternetReadFile(hURL, &buffer, size, &readBytes);
+				if (result != true) {
 					error = GetLastError();
-					cout << "Error" << error;
+					cout << "Error " << error;
 				}
-				news.write(Buffer, Size);
-				memset(Buffer, '\0', sizeof(Buffer));
-			} while (Result == true && readBytes > 0);
+				progressBar.UpdateProgressBar(result, readBytes);
+				news.write(buffer, size);
+				memset(buffer, '\0', sizeof(buffer));
+			} while (result == true && readBytes > 0);
 		}
 	}
 	InternetCloseHandle(hInternetSession);
